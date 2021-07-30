@@ -1,13 +1,8 @@
 package ua.goit.hw10stream;
 
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
+import java.util.*;
+import java.util.stream.*;
 
 public class SimpleStream {
 
@@ -42,21 +37,31 @@ public class SimpleStream {
     }
 
     public static Stream<Long> generatePseudoRandom(long a, long c, long m, long seed) {
-        if (a > Long.MAX_VALUE / a) {
-            BigInteger bigA = new BigInteger(String.valueOf(a));
-            BigInteger bigC = new BigInteger(String.valueOf(c));
-            BigInteger bigM = new BigInteger(String.valueOf(m));
-            BigInteger bigSeed = new BigInteger(String.valueOf(seed));
-            return Stream.iterate(bigSeed, (BigInteger x) -> bigA.multiply(x).add(bigC).mod(bigM).shiftRight(16))
-                    .mapToLong(BigInteger::longValue)
-                    .boxed();
-        } else {
-            return Stream.iterate(seed, x -> (a * x + c) % m);
-        }
+        BigInteger maxLong = BigInteger.valueOf(Long.MAX_VALUE);
+
+        BigInteger bigA = BigInteger.valueOf(a);
+        BigInteger bigC = BigInteger.valueOf(c);
+        BigInteger bigM = BigInteger.valueOf(m);
+        BigInteger bigSeed = BigInteger.valueOf(seed);
+
+        return Stream.iterate(bigSeed, (BigInteger x) -> {
+                    BigInteger xNext = bigA.multiply(x).add(bigC).mod(bigM);
+                    if (xNext.compareTo(maxLong) > 0) {
+                        xNext = xNext.shiftRight(16); //use bits higher then 16
+                    }
+                    return xNext;
+                }
+        ).mapToLong(BigInteger::longValue)
+                .boxed();
     }
 
-    /*public static <T> Stream<T> zip(Stream<T> first, Stream<T> second) {
+    public static <T> Stream<T> zip(Stream<T> first, Stream<T> second) {
+        List<T> firstList = first.collect(Collectors.toList());
+        List<T> secondList = second.collect(Collectors.toList());
 
-    }*/
+        return IntStream.range(0, Math.min(firstList.size(), secondList.size()))
+                .mapToObj(i -> Stream.of(firstList.get(i), secondList.get(i)))
+                .flatMap(item -> item);
+    }
 
 }
